@@ -1,3 +1,30 @@
+# Force Safe Search on major search engines and YouTube
+resource "cloudflare_zero_trust_gateway_policy" "dns_safe_search" {
+  account_id  = var.cloudflare_account_id
+  name        = "Safe Search"
+  description = "Force Safe Search on Google, Bing, YouTube and DuckDuckGo"
+  precedence  = 900
+  enabled     = true
+  filters     = ["dns"]
+  action      = "safesearch"
+  traffic     = "any(dns.domains[*] in {\"google.com\" \"bing.com\" \"youtube.com\" \"duckduckgo.com\"})"
+}
+
+# Block DNS rebinding attacks — queries for public domains resolving to RFC 1918 addresses
+resource "cloudflare_zero_trust_gateway_policy" "dns_rebinding_protection" {
+  account_id  = var.cloudflare_account_id
+  name        = "DNS Rebinding Protection"
+  description = "Block DNS responses resolving to private RFC 1918 addresses from public domains"
+  precedence  = 950
+  enabled     = false
+  filters     = ["dns"]
+  action      = "block"
+  rule_settings = {
+    block_page_enabled = false
+  }
+  traffic = "dns.dst.resolved_ip in {10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 169.254.0.0/16}"
+}
+
 resource "cloudflare_zero_trust_gateway_policy" "force_ipv4" {
   account_id  = var.cloudflare_account_id
   name        = "Force IPv4"

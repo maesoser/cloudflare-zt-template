@@ -32,6 +32,64 @@ resource "cloudflare_zero_trust_gateway_policy" "http_allow_and_log_mcp" {
   }
 }
 
+# Block secrets and API keys from being exfiltrated via HTTP
+resource "cloudflare_zero_trust_gateway_policy" "http_block_dlp_keys_tokens" {
+  account_id  = var.cloudflare_account_id
+  action      = "block"
+  name        = "Block DLP Keys and Tokens"
+  description = "Block HTTP traffic containing secrets or API keys matched by the Keys/Tokens DLP profile"
+  enabled     = true
+  filters     = ["http"]
+  precedence  = 1052
+
+  traffic = format("any(dlp.profiles[*] in {\"%s\"})", cloudflare_zero_trust_dlp_custom_profile.keys_tokens_custom.id)
+
+  rule_settings = {
+    block_page_enabled = false
+  }
+}
+
+# Block all AI providers except OpenAI (ChatGPT) — disabled by default
+# Enable this rule and the redirect rule below to funnel users to the approved AI tool
+resource "cloudflare_zero_trust_gateway_policy" "http_block_ai_providers" {
+  account_id  = var.cloudflare_account_id
+  action      = "block"
+  name        = "Block AI Providers"
+  description = "Block all AI applications except OpenAI/ChatGPT (app type 25 = Artificial Intelligence category)"
+  enabled     = false
+  filters     = ["http"]
+  precedence  = 1053
+
+  # app.type.ids {25} = Artificial Intelligence category; exclude ChatGPT (1199) and ChatGPT Do Not Inspect (1862)
+  traffic = "any(app.type.ids[*] in {25}) and not(any(app.ids[*] in {1199 1862}))"
+
+  rule_settings = {
+    block_page_enabled = false
+  }
+}
+
+# Redirect any remaining AI traffic to ChatGPT — disabled by default
+# Enable together with the block rule above to canonicalise AI usage to a single approved tool
+resource "cloudflare_zero_trust_gateway_policy" "http_redirect_to_chatgpt" {
+  account_id  = var.cloudflare_account_id
+  action      = "redirect"
+  name        = "Redirect to ChatGPT"
+  description = "Redirect all sanctioned AI application traffic to ChatGPT"
+  enabled     = false
+  filters     = ["http"]
+  precedence  = 1054
+
+  traffic = "any(app.type.ids[*] in {25}) and not(any(app.ids[*] in {1199 1862}))"
+
+  rule_settings = {
+    redirect = {
+      target_uri              = "https://chatgpt.com"
+      preserve_path_and_query = false
+      include_context         = false
+    }
+  }
+}
+
 #creates sample http policy to detect AI prompts
 resource "cloudflare_zero_trust_gateway_policy" "http_allow_and_log_genai_prompt" {
   account_id  = var.cloudflare_account_id
