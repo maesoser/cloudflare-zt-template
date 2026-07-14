@@ -19,7 +19,6 @@ resource "cloudflare_zero_trust_list" "allowed_domains_list" {
   ]
 }
 
-
 resource "cloudflare_zero_trust_list" "isolated_domains_list" {
   account_id  = var.cloudflare_account_id
   name        = "Isolated Domains"
@@ -111,8 +110,3 @@ resource "cloudflare_zero_trust_list" "tracking_domains_list" {
     { value = "tracker.coppersurfer.tk", description = "Copper Surfer tracker domain" }
   ]
 }
-
-
-
-
-
