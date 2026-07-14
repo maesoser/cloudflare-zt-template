@@ -10,6 +10,28 @@ resource "cloudflare_zero_trust_gateway_policy" "http_do_not_inspect_policy" {
   traffic     = "any(app.ids[*] in {661 710}) or any(http.conn.domains[*] in {\"cloudflare.net\"})"
 }
 
+# Allow and log MCP protocol traffic with payload logging
+resource "cloudflare_zero_trust_gateway_policy" "http_allow_and_log_mcp" {
+  account_id  = var.cloudflare_account_id
+  action      = "allow"
+  name        = "Allow and Log MCP Traffic"
+  description = "Allow MCP protocol traffic but log payloads for monitoring and analysis"
+  enabled     = true
+  filters     = ["http"]
+  precedence  = 1051
+
+  traffic = format("any(dlp.profiles[*] in {\"%s\"})", cloudflare_zero_trust_dlp_custom_profile.mcp_detect_custom.id)
+
+  rule_settings = {
+    payload_log = {
+      enabled = true
+    }
+    notification_settings = {
+      enabled = false
+    }
+  }
+}
+
 #creates sample http policy to detect AI prompts
 resource "cloudflare_zero_trust_gateway_policy" "http_allow_and_log_genai_prompt" {
   account_id  = var.cloudflare_account_id
