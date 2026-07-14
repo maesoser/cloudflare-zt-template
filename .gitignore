@@ -33,3 +33,4 @@ terraform.rc
 __pycache__/
 *.py[cod]
 *.pyo
+*.py

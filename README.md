@@ -1,6 +1,6 @@
 # Cloudflare Zero Trust — Terraform
 
-Terraform configuration for a Cloudflare Zero Trust deployment. Provider: `cloudflare/cloudflare ~> 5.22.0`.
+Baseline Terraform configuration for a Cloudflare Zero Trust deployment. Provider: `cloudflare/cloudflare ~> 5.22.0`.
 
 ## Credentials
 
@@ -35,18 +35,4 @@ terraform apply
 | `zt_dlp_profiles.tf` | DLP custom profiles and entries (MCP detection, keys/tokens) |
 | `zt_digital_experience.tf` | DEX rules (Desktop, Mobile) and DEX tests |
 
-## Cleanup script
 
-`cleanup-zero-trust.py` removes all managed resources from the account via the API — useful for resetting state before a fresh `terraform apply`.
-
-```bash
-# Preview (no deletions)
-DRY_RUN=true python3 cleanup-zero-trust.py
-
-# Delete everything
-python3 cleanup-zero-trust.py
-```
-
-Resources removed (in order): HTTP/DNS/Network gateway rules, gateway lists, device posture rules, DEX tests, DLP custom entries, DLP custom profiles.
-
-Credentials are read automatically from `terraform.tfvars`.
